@@ -6,7 +6,10 @@
 
   align-items: center;
 
-  & audio {
+  gap: 2em;
+
+  & audio,
+  & canvas {
     width: 100%;
   }
 }
