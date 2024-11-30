@@ -1,0 +1,22 @@
+.container {
+  display: grid;
+
+  margin-top: 3em;
+
+  grid-template-areas:
+    "a b"
+    ". c";
+}
+
+.container canvas:nth-child(1) {
+  grid-area: a;
+  /* transform: rotate(90deg); */
+}
+
+.container canvas:nth-child(2) {
+  grid-area: b;
+}
+
+.container canvas:nth-child(3) {
+  grid-area: c;
+}
