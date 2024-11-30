@@ -23,6 +23,10 @@ const RecordAudio: FC<{ onCreated: (blob: Blob) => void }> = ({
     setTimeout(() => {
       recorder?.stop();
       setIsRecording(false);
+
+      for (const track of stream.getTracks()) {
+        track.stop();
+      }
     }, 5000); // Stop recording after 5 seconds
   };
 
