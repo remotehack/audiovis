@@ -71,49 +71,10 @@ const Waveform: FC<{ audio: AudioBuffer }> = ({ audio }) => {
 const Sonogram: FC<{ audio: AudioBuffer }> = ({ audio }) => {
   const canvas = useRef<HTMLCanvasElement>(null);
 
-  const fttData = useMemo(() => {
-    const fftSize = 512; // Ensure this is a power of two
-    const fft = new FFT(fftSize);
-    const data = audio.getChannelData(0);
-
-    const chunks = Math.floor(audio.length / fftSize);
-    const target = new Float32Array(fftSize * chunks);
-
-    const sample = new Array(fftSize);
-    const out = fft.createComplexArray();
-
-    let max = -Infinity;
-
-    for (let i = 0; i < chunks; i++) {
-      const offset = i * fftSize;
-      for (let i = 0; i < sample.length; i++) sample[i] = data[i + offset];
-      fft.realTransform(out, sample);
-
-      for (let j = 0; j < fftSize; j++) {
-        target[i * fftSize + j] = Math.abs(out[j]);
-        max = Math.max(max, target[i * fftSize + j]);
-      }
-    }
-
-    max = max / 4;
-
-    const image = new ImageData(chunks, fftSize);
-
-    for (let i = 0; i < chunks; i++) {
-      for (let j = 0; j < fftSize; j++) {
-        const idx = j * chunks + i;
-        const value = target[i * fftSize + j];
-
-        const scaledValue = Math.pow(value / max, 0.3); // Apply a power scale
-
-        const [r, g, b, a] = valueToColor(scaledValue);
-
-        image.data[idx * 4] = r;
-        image.data[idx * 4 + 1] = g;
-        image.data[idx * 4 + 2] = b;
-        image.data[idx * 4 + 3] = a;
-      }
-    }
+  const imageData = useMemo(() => {
+    const fftSize = 512;
+    const data = spectrum(audio, fftSize);
+    const image = spectrumToImage(data, fftSize);
 
     return image;
   }, [audio]);
@@ -121,15 +82,72 @@ const Sonogram: FC<{ audio: AudioBuffer }> = ({ audio }) => {
   useEffect(() => {
     const ctx = canvas.current?.getContext("2d");
     if (ctx) {
-      ctx.canvas.width = fttData.width;
-      ctx.canvas.height = fttData.height;
+      ctx.canvas.width = imageData.width;
+      ctx.canvas.height = imageData.height;
 
-      ctx.putImageData(fttData, 0, 0);
+      ctx.putImageData(imageData, 0, 0);
     }
-  }, [fttData]);
+  }, [imageData]);
 
   return <canvas ref={canvas} className={styles.waveform} />;
 };
+
+// load the spectrum for an entire audio buffer
+function spectrum(
+  audio: AudioBuffer,
+  fftSize: 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096
+): Float32Array {
+  const fft = new FFT(fftSize);
+  const data = audio.getChannelData(0);
+
+  const chunks = Math.floor(audio.length / fftSize);
+  const target = new Float32Array(fftSize * chunks);
+
+  const sample = new Array(fftSize);
+  const out = fft.createComplexArray();
+
+  for (let i = 0; i < chunks; i++) {
+    const offset = i * fftSize;
+    for (let i = 0; i < sample.length; i++) sample[i] = data[i + offset];
+    fft.realTransform(out, sample);
+
+    for (let j = 0; j < fftSize; j++) {
+      target[i * fftSize + j] = Math.abs(out[j]);
+    }
+  }
+
+  return target;
+}
+
+// Render a spectrum as a visible image to be written to canvas
+function spectrumToImage(
+  spectrum: Float32Array,
+  fftSize: 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096
+) {
+  const chunks = spectrum.length / fftSize;
+
+  const image = new ImageData(chunks, fftSize);
+
+  const max = spectrum.reduce((a, b) => Math.max(a, b), -Infinity);
+
+  for (let i = 0; i < chunks; i++) {
+    for (let j = 0; j < fftSize; j++) {
+      const idx = j * chunks + i;
+      const value = spectrum[i * fftSize + j];
+
+      const scaledValue = Math.pow(value / max, 0.3); // Apply a power scale
+
+      const [r, g, b, a] = valueToColor(scaledValue);
+
+      image.data[idx * 4] = r;
+      image.data[idx * 4 + 1] = g;
+      image.data[idx * 4 + 2] = b;
+      image.data[idx * 4 + 3] = a;
+    }
+  }
+
+  return image;
+}
 
 function valueToColor(value: number) {
   const r = value < 0.5 ? 0 : 255 * (value - 0.5) * 2;
