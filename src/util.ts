@@ -1,6 +1,7 @@
 import FFT from "fft.js";
 import { useAudioCtx } from "./AudioCtxCtx";
 import { useEffect, useState } from "react";
+import colormap from "colormap";
 
 /**  load the spectrum for an entire audio buffer*/
 export function spectrum(
@@ -49,10 +50,10 @@ export function spectrumToImage(
 
       const [r, g, b, a] = valueToColor(scaledValue);
 
-      image.data[idx * 4] = r;
-      image.data[idx * 4 + 1] = g;
-      image.data[idx * 4 + 2] = b;
-      image.data[idx * 4 + 3] = a;
+      image.data[idx * 4] = r * 255;
+      image.data[idx * 4 + 1] = g * 255;
+      image.data[idx * 4 + 2] = b * 255;
+      image.data[idx * 4 + 3] = a * 255;
     }
   }
 
@@ -75,10 +76,16 @@ export function useAudioBuffer(src: Blob) {
   return buffer;
 }
 
+const colors = colormap({
+  // colormap: "viridis",
+  colormap: "jet",
+  nshades: 255,
+  format: "float",
+});
+console.log(colors);
+
 export function valueToColor(value: number) {
-  const r = value < 0.5 ? 0 : 255 * (value - 0.5) * 2;
-  const g = value < 0.5 ? 255 * value * 2 : 255 * (1 - value) * 2;
-  const b = value < 0.5 ? 255 * (1 - value * 2) : 0;
-  const a = value > 0.2 ? 255 : value * 5 * 255;
-  return [r, g, b, a];
+  const idx = Math.floor(value * colors.length);
+
+  return colors[idx] || [0xff, 0, 0x8, 255];
 }
