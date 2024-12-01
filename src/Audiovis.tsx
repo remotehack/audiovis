@@ -3,12 +3,19 @@ import styles from "./Audiovis.module.css";
 import { useAudioCtx } from "./AudioCtxCtx";
 import { spectrum, spectrumToImage } from "./util";
 
-export const Audiovis: FC<{ srcObject: Blob }> = ({ srcObject }) => {
+export const Audiovis: FC<{
+  srcObject: Blob;
+  picked: boolean;
+  onPick: () => void;
+}> = ({ srcObject, picked, onPick }) => {
   const url = useMemo(() => URL.createObjectURL(srcObject), [srcObject]);
   const buffer = useAudioBuffer(srcObject);
 
   return (
-    <section className={styles.container}>
+    <section
+      className={classes(styles.container, picked && styles.picked)}
+      onClick={onPick}
+    >
       <audio src={url} controls />
 
       {buffer && <Waveform audio={buffer} />}
@@ -91,3 +98,7 @@ const Sonogram: FC<{ audio: AudioBuffer }> = ({ audio }) => {
 
   return <canvas ref={canvas} className={styles.waveform} />;
 };
+
+function classes(...list: (string | false)[]) {
+  return list.filter(Boolean).join(" ");
+}

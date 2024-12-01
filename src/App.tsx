@@ -6,19 +6,43 @@ import { Compare } from "./Compare";
 
 function App() {
   const [blobs, setBlobs] = useState<Blob[]>([]);
+  const [picked, setPicked] = useState<Blob[]>([]);
+  console.log({ blobs, picked });
 
   return (
     <>
       <h1>Audiovis</h1>
-      <RecordAudio onCreated={(b) => setBlobs((prev) => [b, ...prev])} />
 
-      {blobs.length === 2 ? (
-        <Compare a={blobs[0]} b={blobs[1]} />
+      {picked.length === 2 ? (
+        <>
+          <h4>
+            <button onClick={() => setPicked([])}>&larr;</button> Comparing
+          </h4>
+
+          <Compare a={picked[0]} b={picked[1]} />
+        </>
       ) : (
-        blobs.map((blob, i) => <Audiovis key={i} srcObject={blob} />)
+        <>
+          <RecordAudio onCreated={(b) => setBlobs((prev) => [b, ...prev])} />
+
+          {blobs.map((blob, i) => (
+            <Audiovis
+              key={i}
+              srcObject={blob}
+              picked={picked.includes(blob)}
+              onPick={() => setPicked((prev) => toggle(prev, blob))}
+            />
+          ))}
+        </>
       )}
     </>
   );
+}
+
+function toggle<T>(list: T[], item: T): T[] {
+  return list.includes(item)
+    ? list.filter((each) => each !== item)
+    : [...list, item];
 }
 
 export default App;
