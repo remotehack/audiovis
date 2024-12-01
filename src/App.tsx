@@ -30,19 +30,13 @@ function App() {
               key={i}
               srcObject={blob}
               picked={picked.includes(blob)}
-              onPick={() => setPicked((prev) => toggle(prev, blob))}
+              onPick={() => setPicked((prev) => [blob, ...prev])}
             />
           ))}
         </>
       )}
     </>
   );
-}
-
-function toggle<T>(list: T[], item: T): T[] {
-  return list.includes(item)
-    ? list.filter((each) => each !== item)
-    : [...list, item];
 }
 
 export default App;
