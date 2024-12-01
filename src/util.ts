@@ -89,3 +89,38 @@ export function valueToColor(value: number) {
 
   return colors[idx] || [0xff, 0, 0x8, 255];
 }
+
+export const calculateSimilarity = (
+  specA: Float32Array,
+  specB: Float32Array,
+  stride: number
+) => {
+  const aLen = specA.length / stride; // Number of segments in specA
+  const bLen = specB.length / stride; // Number of segments in specB
+  const sim = new Float32Array(aLen * bLen);
+
+  // console.log({ aLen, bLen });
+
+  for (let i = 0; i < aLen; i++) {
+    for (let j = 0; j < bLen; j++) {
+      let dotProduct = 0;
+      let normA = 0;
+      let normB = 0;
+
+      // Compute dot product and norms for segment i and j
+      for (let k = 0; k < stride; k++) {
+        const aVal = specA[i * stride + k];
+        const bVal = specB[j * stride + k];
+        dotProduct += aVal * bVal;
+        normA += aVal * aVal;
+        normB += bVal * bVal;
+      }
+
+      // Safeguard against zero or near-zero norms
+      const denom = Math.sqrt(normA) * Math.sqrt(normB);
+      sim[i * bLen + j] = denom > 0 ? dotProduct / denom : 0;
+    }
+  }
+
+  return sim;
+};

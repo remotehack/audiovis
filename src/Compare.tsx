@@ -1,5 +1,6 @@
 import { FC, useEffect, useMemo, useRef } from "react";
 import {
+  calculateSimilarity,
   spectrum,
   spectrumToImage,
   useAudioBuffer,
@@ -18,29 +19,7 @@ export const Compare: FC<{ a: Blob; b: Blob }> = ({ a, b }) => {
 
   const similarity = useMemo(() => {
     if (specA && specB) {
-      const aLen = specA.length / 512;
-      const bLen = specB.length / 512;
-
-      const sim = new Float32Array(aLen * bLen);
-
-      for (let i = 0; i < aLen; i++) {
-        for (let j = 0; j < bLen; j++) {
-          let dotProduct = 0;
-          let normA = 0;
-          let normB = 0;
-          for (let k = 0; k < 512; k++) {
-            const aVal = specA[i * 512 + k];
-            const bVal = specB[j * 512 + k];
-            dotProduct += aVal * bVal;
-            normA += aVal * aVal;
-            normB += bVal * bVal;
-          }
-          sim[i * bLen + j] =
-            dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-        }
-      }
-
-      console.log(sim);
+      const sim = calculateSimilarity(specA, specB, 512);
 
       return sim;
     }
@@ -52,7 +31,7 @@ export const Compare: FC<{ a: Blob; b: Blob }> = ({ a, b }) => {
     return (
       <div className={styles.container}>
         <Foobar spec={specA} rotate />
-        <Baz similarity={similarity} width={specA.length / 512} />
+        <Baz similarity={similarity} width={specB.length / 512} />
         <Foobar spec={specB} />
       </div>
     );
@@ -101,10 +80,10 @@ const Baz: FC<{ similarity: Float32Array; width: number }> = ({
 
         const [r, g, b, a] = valueToColor(element);
 
-        imData.data[i * 4] = r;
-        imData.data[i * 4 + 1] = g;
-        imData.data[i * 4 + 2] = b;
-        imData.data[i * 4 + 3] = a;
+        imData.data[i * 4] = r * 255;
+        imData.data[i * 4 + 1] = g * 255;
+        imData.data[i * 4 + 2] = b * 255;
+        imData.data[i * 4 + 3] = a * 255;
       }
 
       ctx.canvas.width = imData.width;
@@ -112,7 +91,7 @@ const Baz: FC<{ similarity: Float32Array; width: number }> = ({
 
       ctx.putImageData(imData, 0, 0);
     }
-  }, [similarity]);
+  }, [similarity, width]);
 
   return <canvas ref={canvas} />;
 };
