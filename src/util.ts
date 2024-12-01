@@ -131,10 +131,6 @@ export const calculateDTW = (
   specB: Float32Array,
   stride: number
 ) => {
-  const aLen = specA.length / stride; // Number of segments in specA
-  const bLen = specB.length / stride; // Number of segments in specB
-  const sim = new Float32Array(aLen * bLen);
-
   const aParts = subarrays(specA, stride);
   const bParts = subarrays(specB, stride);
 

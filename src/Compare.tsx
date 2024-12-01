@@ -40,9 +40,13 @@ export const Compare: FC<{ a: Blob; b: Blob }> = ({ a, b }) => {
   if (specA && specB && similarity && dtw) {
     return (
       <div className={styles.container}>
-        <Foobar spec={specA} rotate />
-        <Baz similarity={similarity} width={specB.length / 512} dtw={dtw} />
-        <Foobar spec={specB} />
+        <Waveform spec={specA} rotate />
+        <Correlation
+          similarity={similarity}
+          width={specB.length / 512}
+          dtw={dtw}
+        />
+        <Waveform spec={specB} />
       </div>
     );
   }
@@ -50,7 +54,7 @@ export const Compare: FC<{ a: Blob; b: Blob }> = ({ a, b }) => {
   return <h1>Compare</h1>;
 };
 
-const Foobar: FC<{ spec: Float32Array; rotate?: true }> = ({
+const Waveform: FC<{ spec: Float32Array; rotate?: true }> = ({
   spec,
   rotate,
 }) => {
@@ -73,7 +77,7 @@ const Foobar: FC<{ spec: Float32Array; rotate?: true }> = ({
   return <canvas ref={canvas} />;
 };
 
-const Baz: FC<{
+const Correlation: FC<{
   similarity: Float32Array;
   width: number;
   dtw: [number, number][];
