@@ -5,6 +5,7 @@ import {
   spectrumToImage,
   useAudioBuffer,
   valueToColor,
+  calculateDTW,
 } from "./util";
 import styles from "./Compare.module.css";
 
@@ -27,11 +28,20 @@ export const Compare: FC<{ a: Blob; b: Blob }> = ({ a, b }) => {
     return null;
   }, [specA, specB]);
 
-  if (specA && specB && similarity) {
+  const dtw = useMemo(() => {
+    if (specA && specB) {
+      const dtw = calculateDTW(specA, specB, 512);
+
+      console.log({ dtw });
+      return dtw;
+    }
+  }, [specA, specB]);
+
+  if (specA && specB && similarity && dtw) {
     return (
       <div className={styles.container}>
         <Foobar spec={specA} rotate />
-        <Baz similarity={similarity} width={specB.length / 512} />
+        <Baz similarity={similarity} width={specB.length / 512} dtw={dtw} />
         <Foobar spec={specB} />
       </div>
     );
@@ -63,10 +73,11 @@ const Foobar: FC<{ spec: Float32Array; rotate?: true }> = ({
   return <canvas ref={canvas} />;
 };
 
-const Baz: FC<{ similarity: Float32Array; width: number }> = ({
-  similarity,
-  width,
-}) => {
+const Baz: FC<{
+  similarity: Float32Array;
+  width: number;
+  dtw: [number, number][];
+}> = ({ similarity, width, dtw }) => {
   const canvas = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -90,8 +101,17 @@ const Baz: FC<{ similarity: Float32Array; width: number }> = ({
       ctx.canvas.height = imData.height;
 
       ctx.putImageData(imData, 0, 0);
+
+      ctx.beginPath();
+      for (const [x, y] of dtw) {
+        ctx.lineTo(y, x);
+      }
+
+      ctx.strokeStyle = "#f08";
+      ctx.lineWidth = 4;
+      ctx.stroke();
     }
-  }, [similarity, width]);
+  }, [similarity, dtw, width]);
 
   return <canvas ref={canvas} />;
 };

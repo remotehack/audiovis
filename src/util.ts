@@ -2,6 +2,7 @@ import FFT from "fft.js";
 import { useAudioCtx } from "./AudioCtxCtx";
 import { useEffect, useState } from "react";
 import colormap from "colormap";
+import DynamicTimeWarping from "dynamic-time-warping-ts";
 
 /**  load the spectrum for an entire audio buffer*/
 export function spectrum(
@@ -124,3 +125,54 @@ export const calculateSimilarity = (
 
   return sim;
 };
+
+export const calculateDTW = (
+  specA: Float32Array,
+  specB: Float32Array,
+  stride: number
+) => {
+  const aLen = specA.length / stride; // Number of segments in specA
+  const bLen = specB.length / stride; // Number of segments in specB
+  const sim = new Float32Array(aLen * bLen);
+
+  const aParts = subarrays(specA, stride);
+  const bParts = subarrays(specB, stride);
+
+  console.log({ aParts, bParts });
+
+  function distFunc(a: Float32Array, b: Float32Array) {
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
+
+    // Compute dot product and norms for segment i and j
+    for (let k = 0; k < a.length; k++) {
+      const aVal = a[k];
+      const bVal = b[k];
+      dotProduct += aVal * bVal;
+      normA += aVal * aVal;
+      normB += bVal * bVal;
+    }
+
+    // Safeguard against zero or near-zero norms
+    const denom = Math.sqrt(normA) * Math.sqrt(normB);
+    return 1 - (denom > 0 ? dotProduct / denom : 0);
+  }
+
+  const dtw = new DynamicTimeWarping(aParts, bParts, distFunc);
+
+  return dtw.getPath();
+
+  // return sim;
+};
+
+function subarrays(source: Float32Array, stride: number): Float32Array[] {
+  if (source.length % stride !== 0) throw new Error("invalid length");
+
+  const result: Float32Array[] = [];
+  for (let i = 0; i < source.length; i += stride) {
+    result.push(source.subarray(i, i + stride));
+  }
+
+  return result;
+}
