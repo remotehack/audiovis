@@ -19,7 +19,7 @@ export const Audiovis: FC<{
       <audio src={url} controls />
 
       {buffer && <Waveform audio={buffer} />}
-      {buffer && <Sonogram audio={buffer} />}
+      {buffer && <Spectrogram audio={buffer} />}
     </section>
   );
 };
@@ -75,7 +75,7 @@ const Waveform: FC<{ audio: AudioBuffer }> = ({ audio }) => {
   );
 };
 
-const Sonogram: FC<{ audio: AudioBuffer }> = ({ audio }) => {
+const Spectrogram: FC<{ audio: AudioBuffer }> = ({ audio }) => {
   const canvas = useRef<HTMLCanvasElement>(null);
 
   const imageData = useMemo(() => {
